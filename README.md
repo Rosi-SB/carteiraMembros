@@ -1,6 +1,6 @@
 🛠️ Sistema de Geração Automática de Carteirinhas para Igreja
 
-Sistema desenvolvido para automatizar a geração de carteirinhas em PDF para os membros da Igreja Assembleia de Deus – Ministério de Belém (Campo 1207 - Catanduva-SP). A aplicação lê dados de uma planilha Excel, processa fotos dos membros e gera documentos profissionais prontos para impressão.
+Sistema desenvolvido para automatizar a geração de carteirinhas em PDF para os membros da Igreja Assembleia de Deus – Ministério de Belém (Catanduva-SP). A aplicação lê dados de uma planilha Excel, processa fotos dos membros e gera documentos profissionais prontos para impressão.
 🎯 Objetivo do Projeto
 
 Automatizar um processo manual e repetitivo, gerando carteirinhas personalizadas com padronização visual e informacional, através de uma interface intuitiva e acessível.
