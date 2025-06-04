@@ -496,3 +496,8 @@ async function generateCarteirinha(member, includeBack = true) {
             "info"
         );
     });
+    // Atualiza o ano atual no rodapé
+document.getElementById(
+  "anoAtual"
+).innerHTML = `&copy; ${new Date().getFullYear()} Todos os direitos reservados.`;
+
