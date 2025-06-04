@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Carteirinhas - Igreja Assembleia de Deus</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏛️ Gerador de Carteirinhas</h1>
+            <p>Igreja Assembleia de Deus – Ministério de Belém, Campo 1207 (Catanduva-SP)</p>
+        </div>
+
+        <div class="content">
+            <div class="upload-section">
+                <h3>📁 Upload de Arquivos</h3>
+                
+                <div class="file-input-group">
+                    <label for="excelFile">Planilha Excel (SEDE-Cadastro-Membros.xlsx):</label>
+                    <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls">
+                </div>
+
+                <div class="file-input-group">
+                    <label for="templateFront">Template da Frente:</label>
+                    <input type="file" id="templateFront" class="file-input" accept="image/*">
+                </div>
+
+                <div class="file-input-group">
+                    <label for="templateBack">Template do Verso:</label>
+                    <input type="file" id="templateBack" class="file-input" accept="image/*">
+                </div>
+
+                <div class="file-input-group">
+                    <label for="photosFolder">Fotos dos Membros (múltiplas):</label>
+                    <input type="file" id="photosFolder" class="file-input" accept="image/*" multiple>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="processFiles()">
+                    <span id="processText">📊 Processar Dados</span>
+                    <span id="processLoading" class="loading hidden"></span>
+                </button>
+                <button class="btn btn-success" onclick="generateAllPDF()" id="generateAllBtn" disabled>
+                    📄 Gerar PDF Completo
+                </button>
+                <button class="btn btn-success" onclick="generateIndividualPDFs()" id="generateIndividualBtn" disabled>
+                    📁 Gerar PDFs Individuais
+                </button>
+                <button class="btn btn-danger" onclick="resetSystem()">
+                    🔄 Resetar Sistema
+                </button>
+            </div>
+
+            <div id="statusDiv"></div>
+            <div id="progressDiv" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div id="membersList" class="hidden">
+                <h3>👥 Membros Carregados</h3>
+                <div class="member-list" id="membersContainer"></div>
+            </div>
+
+            <div class="preview-section">
+                <h3>🖼️ Pré-visualização</h3>
+                <div class="canvas-container">
+                    <canvas id="previewCanvasFront" width="1004" height="649" style="max-width: 100%; height: auto;"></canvas>
+                    <canvas id="previewCanvasBack" width="1004" height="649" style="max-width: 100%; height: auto;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <script src="./index.js"></script>
+</body>
+</html>
