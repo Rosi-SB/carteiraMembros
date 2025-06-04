@@ -283,3 +283,60 @@ body {
     color: #666;
     margin-top: 4px;
 }
+
+ .social-icons {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  gap: 10px; /* espaço entre os ícones */
+}
+
+.social-icons i {
+  font-size: 24px;
+  transition: transform 0.2s;
+}
+
+.fa-linkedin {
+  color: #0077b5;
+}
+
+.fa-github {
+  color: #030303;
+}
+
+/* Efeito hover opcional */
+.social-icons a:hover i {
+  transform: scale(1.1);
+}
+
+ footer {
+    background-color: white;
+    color: rgba(26, 26, 26, 0.582);
+    text-align: center;
+    padding: 15px 10px;
+    font-size: 0.9em;
+    width: 100%;
+    max-width: 1200px; /* Igual à .container */
+    margin: 30px auto 0 auto; /* Centraliza o footer e adiciona margem superior */
+    border-top: 1px solid white;
+    border-radius: 15px;
+}
+
+footer a {
+    color: #4fc3f7;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+ @media (max-width: 480px) {
+    footer{
+        width: 100%;
+        max-width: 100%;
+        margin: 20px auto 0 auto;
+        border-radius: 10px;
+    }
+
+ }
