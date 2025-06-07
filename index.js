@@ -474,7 +474,9 @@ async function generateCarteirinha(member, includeBack = true) {
             document.getElementById("generateIndividualBtn").disabled = true;
 
             // Limpar canvas
-            const canvas = document.getElementById("previewCanvas");
+            const frontCanvas = document.getElementById("previewCanvasFront");
+            const backCanvas = document.getElementById("previewCanvasBack");
+            //const canvas = document.getElementById("previewCanvas");
             const ctx = canvas.getContext("2d");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
