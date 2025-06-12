@@ -155,19 +155,40 @@ function readExcelFile(file) {
 
                 // Mapear campos esperados
                 const mappedData = jsonData.map((row) => ({
-                    nome: row.Nome || row.nome || "",
-                    cpf: row.CPF || row.cpf || "",
-                    funcao: row.Funcao || row.funcao || "Membro",
+                    nome: 
+                        row.Nome ||
+                        row.nome ||
+                        "",
+                    cpf: 
+                        row.CPF ||
+                        row.cpf ||
+                        "",
+                    funcao: 
+                        row.Funcao ||
+                        row.funcao ||
+                        "Membro",
                     dataNascimento:
                         row.DataNascimento ||
                         row.dataNascimento ||
                         row["Data Nascimento"] ||
                         "",
                     dataBatismo:
-                        row.DataBatismo || row.dataBatismo || row["Data Batismo"] || "",
-                    congregacao: row.Congregacao || row.congregacao || "",
-                    validade: row.Validade || row.validade || "31/12/2025",
-                    foto: row.Foto || row.foto || "",
+                        row.DataBatismo || 
+                        row.dataBatismo || 
+                        row["DataBatismo"] ||
+                        "",
+                    congregacao: 
+                        row.Congregacao ||
+                        row.congregacao ||
+                        "",
+                    validade: 
+                        row.Validade ||
+                        row.validade ||
+                        "31/12/2025",
+                    foto: 
+                        row.Foto ||
+                        row.foto ||
+                        "",
                 }));
 
                 resolve(mappedData);
