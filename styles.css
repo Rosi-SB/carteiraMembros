@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #F8D794 0%, #F8D794 100%);
     min-height: 100vh;
     padding: 20px;
 }
@@ -21,7 +21,7 @@ body {
 }
 
 .header {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
+    background: linear-gradient(135deg, #284139, #111A19);
     color: white;
     padding: 30px;
     text-align: center;
@@ -103,7 +103,7 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #F8D794, #BB6830);
     color: white;
 }
 
@@ -113,7 +113,7 @@ body {
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #00b894, #00a085);
+    background: linear-gradient(135deg, #809076, #284139);
     color: white;
 }
 
@@ -174,7 +174,7 @@ body {
 
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #809076, #111A19);
     width: 0%;
     transition: width 0.3s;
 }
@@ -311,7 +311,7 @@ body {
 
  footer {
     background-color: white;
-    color: rgba(26, 26, 26, 0.582);
+    color: #111A19;
     text-align: center;
     padding: 15px 10px;
     font-size: 0.9em;
@@ -323,7 +323,7 @@ body {
 }
 
 footer a {
-    color: #4fc3f7;
+    color: #BB6830;
     text-decoration: none;
     font-weight: 500;
 }
