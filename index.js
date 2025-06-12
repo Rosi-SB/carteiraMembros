@@ -473,12 +473,15 @@ async function generateCarteirinha(member, includeBack = true) {
             document.getElementById("generateAllBtn").disabled = true;
             document.getElementById("generateIndividualBtn").disabled = true;
 
-            // Limpar canvas
+            // Limpar canvas frente
             const frontCanvas = document.getElementById("previewCanvasFront");
+            const frontCtx = frontCanvas.getContext("2d");
+            frontCtx.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
+            
+            // Limpar canvas verso
             const backCanvas = document.getElementById("previewCanvasBack");
-            //const canvas = document.getElementById("previewCanvas");
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const backCtx = backCanvas.getContext("2d");
+            backCtx.clearRect(0, 0, backCanvas.width, backCanvas.height);
 
             // Ocultar lista de membros
             document.getElementById("membersList").classList.add("hidden");
