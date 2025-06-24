@@ -37,17 +37,41 @@ function formatCPF(cpf) {
 
 function formatDate(date) {
     if (!date) return "";
-    if (date instanceof Date) {
-        return date.toLocaleDateString("pt-BR");
+
+    // Se a data for um número (como um valor numérico de data do Excel)
+    if (typeof date === "number") {
+        // Se for um número, o Excel armazena a data como número de dias desde 1900
+        // Vamos criar uma data a partir disso
+        const excelDate = new Date((date - 25569) * 86400 * 1000); // Conversão para JS Date
+        return excelDate.toLocaleDateString("pt-BR");
     }
+
+    // Se for uma string, tentamos convertê-la para uma data
     if (typeof date === "string") {
-        const d = new Date(date);
-        if (!isNaN(d.getTime())) {
-            return d.toLocaleDateString("pt-BR");
+        const parsedDate = new Date(date);
+        // Se a data não for válida, tentamos uma conversão usando o formato 'dd/mm/yyyy'
+        if (isNaN(parsedDate)) {
+            const parts = date.split('/');
+            if (parts.length === 3) {
+                // Formato 'dd/mm/yyyy'
+                const day = parts[0].padStart(2, '0');
+                const month = (parseInt(parts[1], 10) - 1).toString().padStart(2, '0');
+                const year = parts[2];
+                const dateString = `${year}-${month}-${day}`;
+                return new Date(dateString).toLocaleDateString("pt-BR");
+            }
         }
     }
+
+    // Se a data for um objeto Date válido
+    if (date instanceof Date && !isNaN(date)) {
+        return date.toLocaleDateString("pt-BR");
+    }
+
+    // Se nada funcionar, retornamos a string original
     return date.toString();
 }
+
 
 async function processFiles() {
     const excelFile = document.getElementById("excelFile").files[0];
@@ -167,24 +191,30 @@ function readExcelFile(file) {
                         row.Funcao ||
                         row.funcao ||
                         "Membro",
-                    dataNascimento:
-                        row.DataNascimento ||
-                        row.dataNascimento ||
-                        row["Data Nascimento"] ||
-                        "",
-                    dataBatismo:
-                        row.DataBatismo || 
-                        row.dataBatismo || 
-                        row["DataBatismo"] ||
-                        "",
+                    dataNascimento: 
+                        formatDate(
+                            row.DataNascimento ||
+                            row.dataNascimento ||
+                            row["Data Nascimento"] ||
+                            ""
+                        ),
+                    dataBatismo: 
+                        formatDate(
+                            row.DataBatismo || 
+                            row.dataBatismo || 
+                            row["DataBatismo"] ||
+                            ""
+                        ),
                     congregacao: 
                         row.Congregacao ||
                         row.congregacao ||
                         "",
                     validade: 
-                        row.Validade ||
-                        row.validade ||
-                        "31/12/2025",
+                        formatDate(
+                            row.Validade ||
+                            row.validade ||
+                            "31/12/2025"
+                        ),
                     foto: 
                         row.Foto ||
                         row.foto ||
@@ -200,6 +230,8 @@ function readExcelFile(file) {
         reader.readAsArrayBuffer(file);
     });
 }
+
+
 
 function displayMembersList() {
     const container = document.getElementById("membersContainer");
