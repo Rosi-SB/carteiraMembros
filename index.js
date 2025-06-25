@@ -178,7 +178,7 @@ function readExcelFile(file) {
 
         // Mapear campos esperados
         const mappedData = jsonData.map((row) => ({
-          nome: row.Nome || row.nome || "",
+          nome: row["Nome Completo"] || row.nome || "",
           cpf: row.CPF || row.cpf || "",
           funcao: row.Função || row.função || "Membro",
           dataNascimento: formatDate(
