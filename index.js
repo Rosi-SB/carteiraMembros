@@ -334,7 +334,7 @@ async function generatePreview(member) {
     ctxFront.fillStyle = "black";
     ctxFront.textAlign = "center";
     ctxFront.font = "bold 28px Arial";
-    ctxFront.fillText(abbreviatedName, 250, 460);
+    ctxFront.fillText(abbreviatedName, 260, 460);
     ctxFront.fillText(member.funcao, 250, 590);
   }
 
@@ -447,7 +447,7 @@ async function generateCarteirinha(member, includeBack = true) {
     // Abreviar o nome
     const abbreviatedName = abbreviateName(member.nome);
 
-    ctx.fillText(abbreviatedName, 250, 460);
+    ctx.fillText(abbreviatedName, 260, 460);
     ctx.fillText(member.funcao, 250, 590);
   }
 
