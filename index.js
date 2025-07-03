@@ -218,7 +218,7 @@ async function processFiles() {
     updateProgress(40);
     showStatus("Carregando fotos...", "info");
 
-   // Carregar fotos com melhor tratamento de nomes
+    // Carregar fotos com melhor tratamento de nomes
     photos = {};
     for (let file of photoFiles) {
       try {
@@ -254,8 +254,7 @@ async function processFiles() {
       `✅ Processamento concluído! ${membersData.length} membros carregados.`,
       "success"
     );
-
-    // Habilitar botões de geração
+     // Habilitar botões de geração
     document.getElementById("generateAllBtn").disabled = false;
     document.getElementById("generateIndividualBtn").disabled = false;
 
