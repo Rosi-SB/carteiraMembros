@@ -272,16 +272,14 @@ async function generatePreview(member) {
   const ctxBack = backCanvas.getContext("2d");
 
   // Função para abreviar o nome
- function abbreviateName(fullName) {
+function abbreviateName(fullName) {
   // Lista de palavras que queremos preservar (removemos as duplicações)
   const preserveWords = new Set(["da", "de", "dos", "das", "do"]);
 
   const nameParts = fullName.split(" ");
 
-  // O primeiro nome permanece intacto
+  // O primeiro nome e o último sobrenome permanecem intactos
   const firstName = nameParts[0];
-
-  // O último sobrenome permanece intacto
   const lastName = nameParts[nameParts.length - 1];
 
   // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
@@ -402,10 +400,8 @@ async function generateCarteirinha(member, includeBack = true) {
 
   const nameParts = fullName.split(" ");
 
-  // O primeiro nome permanece intacto
+  // O primeiro nome e o último sobrenome permanecem intactos
   const firstName = nameParts[0];
-
-  // O último sobrenome permanece intacto
   const lastName = nameParts[nameParts.length - 1];
 
   // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
