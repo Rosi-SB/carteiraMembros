@@ -10,6 +10,71 @@ const BACK_FIELD_POSITIONS = {
   validade: { x: 230, y: 350 },
 };
 
+// Função melhorada para abreviar nomes
+function abbreviateName(fullName) {
+  if (!fullName || typeof fullName !== 'string') return '';
+  
+  // Limpar espaços extras e normalizar
+  const cleanName = fullName.trim().replace(/\s+/g, ' ');
+  
+  // Lista expandida de preposições e artigos que devem ser preservados
+  const preserveWords = new Set([
+    'da', 'de', 'dos', 'das', 'do', 'e', 'y',
+    'del', 'la', 'le', 'di', 'von', 'van', 'el'
+  ]);
+  
+  const nameParts = cleanName.split(' ').filter(part => part.length > 0);
+  
+  // Se o nome tem apenas uma ou duas partes, retorna completo
+  if (nameParts.length <= 2) {
+    return cleanName;
+  }
+  
+  // Primeiro nome sempre completo
+  const firstName = nameParts[0];
+  
+  // Último sobrenome sempre completo
+  const lastName = nameParts[nameParts.length - 1];
+  
+  // Processar nomes do meio
+  const middleNames = nameParts.slice(1, -1);
+  const processedMiddleNames = middleNames.map(name => {
+    const lowerName = name.toLowerCase();
+    
+    // Se é uma preposição/artigo, manter completo
+    if (preserveWords.has(lowerName)) {
+      return name;
+    }
+    
+    // Se o nome é muito curto (2 caracteres ou menos), manter completo
+    if (name.length <= 2) {
+      return name;
+    }
+    
+    // Caso contrário, abreviar
+    return name.charAt(0).toUpperCase() + '.';
+  });
+  
+  // Juntar tudo
+  return [firstName, ...processedMiddleNames, lastName].join(' ');
+}
+
+// Função para validar tamanho do nome e sugerir abreviação
+function validateNameLength(name, maxLength = 25) {
+  if (!name) return { isValid: true, suggestion: '' };
+  
+  if (name.length <= maxLength) {
+    return { isValid: true, suggestion: name };
+  }
+  
+  const abbreviated = abbreviateName(name);
+  return {
+    isValid: abbreviated.length <= maxLength,
+    suggestion: abbreviated,
+    original: name
+  };
+}
+
 function showStatus(message, type = "info") {
   const statusDiv = document.getElementById("statusDiv");
   statusDiv.className = `status ${type}`;
@@ -32,6 +97,13 @@ function updateProgress(percent) {
 function formatCPF(cpf) {
   if (!cpf) return "";
   const numbers = cpf.toString().replace(/\D/g, "");
+  
+  // Validar se tem 11 dígitos
+  if (numbers.length !== 11) {
+    console.warn(`CPF inválido: ${cpf}`);
+    return cpf; // Retorna original se inválido
+  }
+  
   return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
 
@@ -72,6 +144,50 @@ function formatDate(date) {
   return date.toString();
 }
 
+/ Função melhorada para buscar foto do membro
+function findMemberPhoto(member, photos) {
+  if (!member || !member.nome || !photos) return null;
+  
+  const memberName = member.nome.toLowerCase().trim();
+  
+  // 1. Busca exata pelo nome da foto especificado
+  if (member.foto && photos[member.foto]) {
+    return photos[member.foto];
+  }
+  
+  // 2. Busca por nome completo
+  const exactMatch = Object.keys(photos).find(key => 
+    key.toLowerCase() === memberName
+  );
+  if (exactMatch) return photos[exactMatch];
+  
+  // 3. Busca por primeiro nome + último sobrenome
+  const nameParts = memberName.split(' ');
+  if (nameParts.length > 1) {
+    const firstLast = `${nameParts[0]} ${nameParts[nameParts.length - 1]}`;
+    const firstLastMatch = Object.keys(photos).find(key =>
+      key.toLowerCase() === firstLast
+    );
+    if (firstLastMatch) return photos[firstLastMatch];
+  }
+  
+  // 4. Busca parcial (contém o nome)
+  const partialMatch = Object.keys(photos).find(key => {
+    const keyLower = key.toLowerCase();
+    return keyLower.includes(memberName) || memberName.includes(keyLower);
+  });
+  if (partialMatch) return photos[partialMatch];
+  
+  // 5. Busca por primeiro nome apenas
+  if (nameParts.length > 0) {
+    const firstNameMatch = Object.keys(photos).find(key =>
+      key.toLowerCase().includes(nameParts[0])
+    );
+    if (firstNameMatch) return photos[firstNameMatch];
+  }
+  
+  return null;
+}
 async function processFiles() {
   const excelFile = document.getElementById("excelFile").files[0];
   const templateFrontFile = document.getElementById("templateFront").files[0];
@@ -102,11 +218,17 @@ async function processFiles() {
     updateProgress(40);
     showStatus("Carregando fotos...", "info");
 
-    // Carregar fotos
+   // Carregar fotos com melhor tratamento de nomes
     photos = {};
     for (let file of photoFiles) {
-      const name = file.name.replace(/\.[^/.]+$/, ""); // Remove extensão
-      photos[name] = await loadImage(file);
+      try {
+        // Remove extensão e normaliza o nome
+        const name = file.name.replace(/\.[^/.]+$/, "").trim();
+        const normalizedName = name.replace(/[_-]/g, ' '); // Substitui _ e - por espaços
+        photos[normalizedName] = await loadImage(file);
+      } catch (error) {
+        console.warn(`Erro ao carregar foto ${file.name}:`, error);
+      }
     }
 
     updateProgress(60);
@@ -240,23 +362,23 @@ function displayMembersList() {
 
 async function downloadCarteirinha(member) {
   const { jsPDF } = window.jspdf;  // Acessando o jsPDF
-  const doc = new jsPDF("landscape", "px", [1191, 840]);  // Criando um novo documento PDF no formato A4 (paisagem), usando pixels
+  const doc = new jsPDF("landscape", "px", [1004, 649]);  // Criando um novo documento PDF no formato A4 (paisagem), usando pixels
 
   // Gerar a frente e o verso da carteirinha
   const pages = await generateCarteirinha(member, true);  // Passando 'true' para gerar o verso
 
   // Adicionar a frente no PDF (primeira página)
   const frontImage = pages[0];  // A primeira página é a frente da carteirinha
-  const frontWidth = 1191;  // Largura total em pixels
-  const frontHeight = 840;  // Altura total em pixels
+  const frontWidth = 1004;  // Largura total em pixels
+  const frontHeight = 649;  // Altura total em pixels
   doc.addImage(frontImage, "PNG", 0, 0, frontWidth, frontHeight);  // Adicionando imagem da frente (ocupando todo o espaço)
 
   // Adicionar uma nova página para o verso
   if (pages[1]) {  // Verifica se o verso existe
     doc.addPage();
     const backImage = pages[1];  // A segunda página é o verso da carteirinha
-    const backWidth = 1191;  // Largura total em pixels
-    const backHeight = 840;  // Altura total em pixels
+    const backWidth = 1004;  // Largura total em pixels
+    const backHeight = 649;  // Altura total em pixels
     doc.addImage(backImage, "PNG", 0, 0, backWidth, backHeight);  // Adicionando imagem do verso (ocupando todo o espaço)
   }
 
@@ -270,31 +392,6 @@ async function generatePreview(member) {
 
   const ctxFront = frontCanvas.getContext("2d");
   const ctxBack = backCanvas.getContext("2d");
-
-  // Função para abreviar o nome
-function abbreviateName(fullName) {
-  // Lista de palavras que queremos preservar (removemos as duplicações)
-  const preserveWords = new Set(["da", "de", "dos", "das", "do"]);
-
-  const nameParts = fullName.split(" ");
-
-  // O primeiro nome e o último sobrenome permanecem intactos
-  const firstName = nameParts[0];
-  const lastName = nameParts[nameParts.length - 1];
-
-  // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
-  const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
-    // Verifica se o sobrenome está na lista de preservação
-    if (preserveWords.has(surname.toLowerCase())) {
-      return surname;  // Mantém o sobrenome intacto
-    } else {
-      return surname[0] + ".";  // Abrevia o sobrenome
-    }
-  });
-
-  // Junta o primeiro nome, os sobrenomes abreviados e o último sobrenome
-  return [firstName, ...abbreviatedSurnames, lastName].join(" ");
-}
 
   // Limpar canvas
   ctxFront.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
@@ -332,8 +429,9 @@ function abbreviateName(fullName) {
       ctxFront.fillText("Sem Foto", 31 + 331 / 2, 26 + 327 / 2);
     }
 
-    // Abreviar o nome
     const abbreviatedName = abbreviateName(member.nome);
+    ctxFront.fillText(abbreviatedName, 260, 460);
+    ctxFront.fillText(member.funcao, 250, 590);
 
     // Configurar texto
     ctxFront.fillStyle = "black";
@@ -392,30 +490,10 @@ async function generateCarteirinha(member, includeBack = true) {
   const ctx = canvas.getContext("2d");
 
   const pages = [];
-
-  // Função para abreviar o nome
-  function abbreviateName(fullName) {
-  // Lista de palavras que queremos preservar (removemos as duplicações)
-  const preserveWords = new Set(["da", "de", "dos", "das", "do"]);
-
-  const nameParts = fullName.split(" ");
-
-  // O primeiro nome e o último sobrenome permanecem intactos
-  const firstName = nameParts[0];
-  const lastName = nameParts[nameParts.length - 1];
-
-  // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
-  const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
-    // Verifica se o sobrenome está na lista de preservação
-    if (preserveWords.has(surname.toLowerCase())) {
-      return surname;  // Mantém o sobrenome intacto
-    } else {
-      return surname[0] + ".";  // Abrevia o sobrenome
-    }
-  });
-
-  // Junta o primeiro nome, os sobrenomes abreviados e o último sobrenome
-  return [firstName, ...abbreviatedSurnames, lastName].join(" ");
+  
+  const abbreviatedName = abbreviateName(member.nome);
+    ctxFront.fillText(abbreviatedName, 260, 460);
+    ctxFront.fillText(member.funcao, 250, 590);
 }
 
   // Gerar frente
@@ -454,11 +532,9 @@ async function generateCarteirinha(member, includeBack = true) {
     ctx.textAlign = "center";
     ctx.font = "bold 28px Arial";
 
-    // Abreviar o nome
     const abbreviatedName = abbreviateName(member.nome);
-
-    ctx.fillText(abbreviatedName, 260, 460);
-    ctx.fillText(member.funcao, 250, 590);
+    ctxFront.fillText(abbreviatedName, 260, 460);
+    ctxFront.fillText(member.funcao, 250, 590);
   }
 
   pages.push(canvas.toDataURL("image/png"));
