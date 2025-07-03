@@ -110,41 +110,61 @@ function formatCPF(cpf) {
 function formatDate(date) {
   if (!date) return "";
 
-  // Se a data for um número (como um valor numérico de data do Excel)
-  if (typeof date === "number") {
-    // Se for um número, o Excel armazena a data como número de dias desde 1900
-    // Vamos criar uma data a partir disso
-    const excelDate = new Date((date - 25569) * 86400 * 1000); // Conversão para JS Date
-    return excelDate.toLocaleDateString("pt-BR");
-  }
-
-  // Se for uma string, tentamos convertê-la para uma data
-  if (typeof date === "string") {
-    const parsedDate = new Date(date);
-    // Se a data não for válida, tentamos uma conversão usando o formato 'dd/mm/yyyy'
-    if (isNaN(parsedDate)) {
-      const parts = date.split("/");
-      if (parts.length === 3) {
-        // Formato 'dd/mm/yyyy'
-        const day = parts[0].padStart(2, "0");
-        const month = (parseInt(parts[1], 10) - 1).toString().padStart(2, "0");
-        const year = parts[2];
-        const dateString = `${year}-${month}-${day}`;
-        return new Date(dateString).toLocaleDateString("pt-BR");
+  try {
+    // Se a data for um número (Excel date serial)
+    if (typeof date === "number") {
+      // Conversão mais precisa para datas do Excel
+      const excelDate = new Date((date - 25569) * 86400 * 1000);
+      if (!isNaN(excelDate.getTime())) {
+        return excelDate.toLocaleDateString("pt-BR");
       }
     }
-  }
 
-  // Se a data for um objeto Date válido
-  if (date instanceof Date && !isNaN(date)) {
-    return date.toLocaleDateString("pt-BR");
-  }
+    // Se for uma string
+    if (typeof date === "string") {
+      // Tentar parsing direto primeiro
+      let parsedDate = new Date(date);
+      
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toLocaleDateString("pt-BR");
+      }
+      
+      // Tentar formato brasileiro dd/mm/yyyy
+      const brazilianMatch = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (brazilianMatch) {
+        const [, day, month, year] = brazilianMatch;
+        parsedDate = new Date(year, month - 1, day);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toLocaleDateString("pt-BR");
+        }
+      }
+      
+      // Tentar formato ISO yyyy-mm-dd
+      const isoMatch = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        parsedDate = new Date(year, month - 1, day);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toLocaleDateString("pt-BR");
+        }
+      }
+    }
 
-  // Se nada funcionar, retornamos a string original
-  return date.toString();
+    // Se for um objeto Date válido
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      return date.toLocaleDateString("pt-BR");
+    }
+
+    // Se nada funcionar, retornar string vazia ou valor original
+    console.warn(`Data inválida: ${date}`);
+    return "";
+  } catch (error) {
+    console.error(`Erro ao formatar data: ${date}`, error);
+    return "";
+  }
 }
 
-/ Função melhorada para buscar foto do membro
+// Função melhorada para buscar foto do membro
 function findMemberPhoto(member, photos) {
   if (!member || !member.nome || !photos) return null;
   
@@ -188,6 +208,7 @@ function findMemberPhoto(member, photos) {
   
   return null;
 }
+
 async function processFiles() {
   const excelFile = document.getElementById("excelFile").files[0];
   const templateFrontFile = document.getElementById("templateFront").files[0];
@@ -254,7 +275,8 @@ async function processFiles() {
       `✅ Processamento concluído! ${membersData.length} membros carregados.`,
       "success"
     );
-     // Habilitar botões de geração
+
+    // Habilitar botões de geração
     document.getElementById("generateAllBtn").disabled = false;
     document.getElementById("generateIndividualBtn").disabled = false;
 
@@ -297,24 +319,35 @@ function readExcelFile(file) {
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Mapear campos esperados
-        const mappedData = jsonData.map((row) => ({
-          nome: row["Nome Completo"] || row.nome || row.Nome || "",
-          cpf: row.CPF || row.cpf || row.Cpf ||  "",
-          funcao: row.Função || row.função || "Membro",
-          dataNascimento: formatDate(
-            row["Data Nascimento"] ||
-              row["data Nascimento"] ||
-              row["Data Nascimento"] ||
-              ""
-          ),
-          dataBatismo: formatDate(
-            row["Data Batismo"]|| row["DataBatismo"]  || row["Data Batismo"] || ""
-          ),
-          setor: row.Setor || row.setor || "",
-          validade: "",
-          foto: row.Foto || row.foto || "",
-        }));
+        // Mapear campos com mais flexibilidade
+        const mappedData = jsonData.map((row, index) => {
+          try {
+            return {
+              nome: (row["Nome Completo"] || row.nome || row.Nome || "").toString().trim(),
+              cpf: (row.CPF || row.cpf || row.Cpf || "").toString().trim(),
+              funcao: (row.Função || row.função || row.Funcao || row.funcao || "Membro").toString().trim(),
+              dataNascimento: formatDate(
+                row["Data Nascimento"] ||
+                row["data Nascimento"] ||
+                row["Data de Nascimento"] ||
+                row["DataNascimento"] ||
+                ""
+              ),
+              dataBatismo: formatDate(
+                row["Data Batismo"] || 
+                row["DataBatismo"] || 
+                row["Data de Batismo"] ||
+                ""
+              ),
+              setor: (row.Setor || row.setor || "").toString().trim(),
+              validade: "",
+              foto: (row.Foto || row.foto || "").toString().trim(),
+            };
+          } catch (error) {
+            console.warn(`Erro ao processar linha ${index + 1}:`, error);
+            return null;
+          }
+        }).filter(member => member && member.nome); // Remove entradas inválidas
 
         resolve(mappedData);
       } catch (error) {
@@ -335,24 +368,30 @@ function displayMembersList() {
   membersData.forEach((member, index) => {
     const memberDiv = document.createElement("div");
     memberDiv.className = "member-item";
+    
+    // Validar nome para exibição
+    const nameValidation = validateNameLength(member.nome);
+    const displayName = nameValidation.isValid ? member.nome : nameValidation.suggestion;
+    
     memberDiv.innerHTML = `
-                    <div class="member-info">
-                        <div class="member-name">${member.nome}</div>
-                        <div class="member-details">
-                            ${member.funcao} | CPF: ${formatCPF(
-      member.cpf
-    )} | ${member.setor}
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;" 
-                            onclick="generatePreview(membersData[${index}])">
-                        👁️ Visualizar
-                    </button>
-                    <button class="btn btn-success" style="padding: 8px 16px; font-size: 14px; margin-left: 8px;" 
-                        onclick="downloadCarteirinha(membersData[${index}])">
-                        📥 Baixar Carteirinha
-                    </button>
-                `;
+      <div class="member-info">
+        <div class="member-name" title="${member.nome}">
+          ${displayName}
+          ${!nameValidation.isValid ? '<span style="color: orange;">⚠️</span>' : ''}
+        </div>
+        <div class="member-details">
+          ${member.funcao} | CPF: ${formatCPF(member.cpf)} | ${member.setor}
+        </div>
+      </div>
+      <button class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;" 
+              onclick="generatePreview(membersData[${index}])">
+        👁️ Visualizar
+      </button>
+      <button class="btn btn-success" style="padding: 8px 16px; font-size: 14px; margin-left: 8px;" 
+          onclick="downloadCarteirinha(membersData[${index}])">
+        📥 Baixar Carteirinha
+      </button>
+    `;
     container.appendChild(memberDiv);
   });
 
@@ -360,29 +399,30 @@ function displayMembersList() {
 }
 
 async function downloadCarteirinha(member) {
-  const { jsPDF } = window.jspdf;  // Acessando o jsPDF
-  const doc = new jsPDF("landscape", "px", [1004, 649]);  // Criando um novo documento PDF no formato A4 (paisagem), usando pixels
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("landscape", "px", [1004, 649]);
 
   // Gerar a frente e o verso da carteirinha
-  const pages = await generateCarteirinha(member, true);  // Passando 'true' para gerar o verso
+  const pages = await generateCarteirinha(member, true);
 
-  // Adicionar a frente no PDF (primeira página)
-  const frontImage = pages[0];  // A primeira página é a frente da carteirinha
-  const frontWidth = 1004;  // Largura total em pixels
-  const frontHeight = 649;  // Altura total em pixels
-  doc.addImage(frontImage, "PNG", 0, 0, frontWidth, frontHeight);  // Adicionando imagem da frente (ocupando todo o espaço)
+  // Adicionar a frente no PDF
+  const frontImage = pages[0];
+  const frontWidth = 1004;
+  const frontHeight = 649;
+  doc.addImage(frontImage, "PNG", 0, 0, frontWidth, frontHeight);
 
   // Adicionar uma nova página para o verso
-  if (pages[1]) {  // Verifica se o verso existe
+  if (pages[1]) {
     doc.addPage();
-    const backImage = pages[1];  // A segunda página é o verso da carteirinha
-    const backWidth = 1004;  // Largura total em pixels
-    const backHeight = 649;  // Altura total em pixels
-    doc.addImage(backImage, "PNG", 0, 0, backWidth, backHeight);  // Adicionando imagem do verso (ocupando todo o espaço)
+    const backImage = pages[1];
+    const backWidth = 1004;
+    const backHeight = 649;
+    doc.addImage(backImage, "PNG", 0, 0, backWidth, backHeight);
   }
 
-  // Baixar o PDF
-  doc.save(`${member.nome}-carteirinha.pdf`);  // Salva o PDF com o nome do membro
+  // Criar nome de arquivo seguro
+  const safeFileName = member.nome.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+  doc.save(`${safeFileName}-carteirinha.pdf`);
 }
 
 async function generatePreview(member) {
@@ -400,26 +440,13 @@ async function generatePreview(member) {
   if (templates.front) {
     ctxFront.drawImage(templates.front, 0, 0, 1004, 649);
 
-    // Buscar foto do membro
-    let memberPhoto = null;
-    if (member.foto && photos[member.foto]) {
-      memberPhoto = photos[member.foto];
-    } else {
-      const photoKeys = Object.keys(photos);
-      const matchingKey = photoKeys.find(
-        (key) =>
-          key.toLowerCase().includes(member.nome.toLowerCase()) ||
-          member.nome.toLowerCase().includes(key.toLowerCase())
-      );
-      if (matchingKey) {
-        memberPhoto = photos[matchingKey];
-      }
-    }
+    // Buscar foto do membro usando função melhorada
+    const memberPhoto = findMemberPhoto(member, photos);
 
     // Desenhar foto ou placeholder
     if (memberPhoto) {
-      ctxFront.drawImage(memberPhoto, 31, 26, 331, 327);
-    } else {
+       ctxFront.drawImage(memberPhoto, 31, 26, 331, 327);
+      } else {
       ctxFront.fillStyle = "#cccccc";
       ctxFront.fillRect(31, 26, 331, 327);
       ctxFront.fillStyle = "#666666";
@@ -428,14 +455,12 @@ async function generatePreview(member) {
       ctxFront.fillText("Sem Foto", 31 + 331 / 2, 26 + 327 / 2);
     }
 
-    const abbreviatedName = abbreviateName(member.nome);
-    ctxFront.fillText(abbreviatedName, 260, 460);
-    ctxFront.fillText(member.funcao, 250, 590);
-
-    // Configurar texto
+    // Configurar texto com nome abreviado
     ctxFront.fillStyle = "black";
     ctxFront.textAlign = "center";
     ctxFront.font = "bold 28px Arial";
+    
+    const abbreviatedName = abbreviateName(member.nome);
     ctxFront.fillText(abbreviatedName, 260, 460);
     ctxFront.fillText(member.funcao, 250, 590);
   }
@@ -458,12 +483,12 @@ async function generatePreview(member) {
       BACK_FIELD_POSITIONS.cpf.y
     );
     ctxBack.fillText(
-      formatDate(member.dataNascimento),
+      member.dataNascimento,
       BACK_FIELD_POSITIONS.dataNascimento.x,
       BACK_FIELD_POSITIONS.dataNascimento.y
     );
     ctxBack.fillText(
-      formatDate(member.dataBatismo),
+      member.dataBatismo,
       BACK_FIELD_POSITIONS.dataBatismo.x,
       BACK_FIELD_POSITIONS.dataBatismo.y
     );
@@ -489,11 +514,6 @@ async function generateCarteirinha(member, includeBack = true) {
   const ctx = canvas.getContext("2d");
 
   const pages = [];
-  
-  const abbreviatedName = abbreviateName(member.nome);
-    ctxFront.fillText(abbreviatedName, 260, 460);
-    ctxFront.fillText(member.funcao, 250, 590);
-}
 
   // Gerar frente
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -531,9 +551,10 @@ async function generateCarteirinha(member, includeBack = true) {
     ctx.textAlign = "center";
     ctx.font = "bold 28px Arial";
 
+    // Usar nome abreviado
     const abbreviatedName = abbreviateName(member.nome);
-    ctxFront.fillText(abbreviatedName, 260, 460);
-    ctxFront.fillText(member.funcao, 250, 590);
+    ctx.fillText(abbreviatedName, 260, 460);
+    ctx.fillText(member.funcao, 250, 590);
   }
 
   pages.push(canvas.toDataURL("image/png"));
@@ -558,12 +579,12 @@ async function generateCarteirinha(member, includeBack = true) {
         BACK_FIELD_POSITIONS.cpf.y
       );
       ctx.fillText(
-        formatDate(member.dataNascimento),
+        member.dataNascimento,
         BACK_FIELD_POSITIONS.dataNascimento.x,
         BACK_FIELD_POSITIONS.dataNascimento.y
       );
       ctx.fillText(
-        formatDate(member.dataBatismo),
+        member.dataBatismo,
         BACK_FIELD_POSITIONS.dataBatismo.x,
         BACK_FIELD_POSITIONS.dataBatismo.y
       );
@@ -580,9 +601,9 @@ async function generateCarteirinha(member, includeBack = true) {
 
       pages.push(canvas.toDataURL("image/png"));
     }
-
-    return pages;
   }
+
+  return pages;
 }
 
 async function generateAllPDF() {
@@ -663,10 +684,8 @@ async function generateIndividualPDFs() {
         pdf.addImage(pages[1], "PNG", 0, 0, 1004, 649);
       }
 
-      const fileName = `Carteirinha_${member.nome.replace(
-        /[^a-zA-Z0-9]/g,
-        "_"
-      )}.pdf`;
+      const safeFileName = member.nome.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+      const fileName = `Carteirinha_${safeFileName}.pdf`;
       pdf.save(fileName);
 
       updateProgress(((i + 1) / membersData.length) * 100);
@@ -734,6 +753,7 @@ document.addEventListener("DOMContentLoaded", function () {
     "info"
   );
 });
+
 // Atualiza o ano atual no rodapé
 document.getElementById(
   "anoAtual"
