@@ -272,24 +272,31 @@ async function generatePreview(member) {
   const ctxBack = backCanvas.getContext("2d");
 
   // Função para abreviar o nome
-  function abbreviateName(fullName) {
-    const preserveWords = ["da", "de", "dos", "das", "do", "das", "dos"];
-    const nameParts = fullName.split(" ");
-    // O primeiro nome permanece intacto
-    const firstName = nameParts[0];
-    // O último sobrenome permanece intacto
-    const lastName = nameParts[nameParts.length - 1];
-    // Agora, vamos processar os sobrenomes do meio
-    const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
-      // Se o sobrenome for um dos que queremos preservar, mantemos ele intacto
-      if (preserveWords.includes(surname.toLowerCase())) {
-        return surname; // Mantém o sobrenome intacto
-      } else {
-        return surname[0] + "."; // Abrevia o sobrenome
-      }
-    });
-    return [firstName, ...abbreviatedSurnames, lastName].join(" ");
-  }
+ function abbreviateName(fullName) {
+  // Lista de palavras que queremos preservar (removemos as duplicações)
+  const preserveWords = new Set(["da", "de", "dos", "das", "do"]);
+
+  const nameParts = fullName.split(" ");
+
+  // O primeiro nome permanece intacto
+  const firstName = nameParts[0];
+
+  // O último sobrenome permanece intacto
+  const lastName = nameParts[nameParts.length - 1];
+
+  // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
+  const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
+    // Verifica se o sobrenome está na lista de preservação
+    if (preserveWords.has(surname.toLowerCase())) {
+      return surname;  // Mantém o sobrenome intacto
+    } else {
+      return surname[0] + ".";  // Abrevia o sobrenome
+    }
+  });
+
+  // Junta o primeiro nome, os sobrenomes abreviados e o último sobrenome
+  return [firstName, ...abbreviatedSurnames, lastName].join(" ");
+}
 
   // Limpar canvas
   ctxFront.clearRect(0, 0, frontCanvas.width, frontCanvas.height);
@@ -390,23 +397,30 @@ async function generateCarteirinha(member, includeBack = true) {
 
   // Função para abreviar o nome
   function abbreviateName(fullName) {
-    const preserveWords = ["da", "de", "dos", "das", "do", "das", "dos"];
-    const nameParts = fullName.split(" ");
-    // O primeiro nome permanece intacto
-    const firstName = nameParts[0];
-    // O último sobrenome permanece intacto
-    const lastName = nameParts[nameParts.length - 1];
-    // Agora, vamos processar os sobrenomes do meio
-    const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
-      // Se o sobrenome for um dos que queremos preservar, mantemos ele intacto
-      if (preserveWords.includes(surname.toLowerCase())) {
-        return surname; // Mantém o sobrenome intacto
-      } else {
-        return surname[0] + "."; // Abrevia o sobrenome
-      }
-    });
-    return [firstName, ...abbreviatedSurnames, lastName].join(" ");
-  }
+  // Lista de palavras que queremos preservar (removemos as duplicações)
+  const preserveWords = new Set(["da", "de", "dos", "das", "do"]);
+
+  const nameParts = fullName.split(" ");
+
+  // O primeiro nome permanece intacto
+  const firstName = nameParts[0];
+
+  // O último sobrenome permanece intacto
+  const lastName = nameParts[nameParts.length - 1];
+
+  // Para os sobrenomes do meio, abreviamos se não forem palavras da lista de preservação
+  const abbreviatedSurnames = nameParts.slice(1, -1).map((surname) => {
+    // Verifica se o sobrenome está na lista de preservação
+    if (preserveWords.has(surname.toLowerCase())) {
+      return surname;  // Mantém o sobrenome intacto
+    } else {
+      return surname[0] + ".";  // Abrevia o sobrenome
+    }
+  });
+
+  // Junta o primeiro nome, os sobrenomes abreviados e o último sobrenome
+  return [firstName, ...abbreviatedSurnames, lastName].join(" ");
+}
 
   // Gerar frente
   ctx.clearRect(0, 0, canvas.width, canvas.height);
