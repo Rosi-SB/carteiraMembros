@@ -113,44 +113,53 @@ function formatDate(date) {
   const pad = (n) => n.toString().padStart(2, "0");
 
   try {
-    // 1. Se for número (serial do Excel)
+    // 1) Serial do Excel
     if (typeof date === "number") {
-      const excelDate = new Date((date - 25569) * 86400 * 1000);
-      if (!isNaN(excelDate.getTime())) {
-        const d = excelDate;
-        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-      }
+      const utcDays   = date - 25569;
+      const utcMs     = utcDays * 86400 * 1000;
+      const excelUtc  = new Date(utcMs);
+      // Corrige deslocamento de fuso
+      excelUtc.setMinutes(excelUtc.getMinutes() + excelUtc.getTimezoneOffset());
+      const d = excelUtc;
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
     }
 
-    // 2. Se já for objeto Date válido
+    // 2) Objeto Date direto
     if (date instanceof Date && !isNaN(date.getTime())) {
       return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
     }
 
-    // 3. Se for string, fazer parsing manual
+    // 3) String: parsing manual
     if (typeof date === "string") {
-      // 3.1 Formato ISO yyyy-mm-dd
-      let m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      // 3.1 ISO com ou sem tempo
+      let m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?=T|$)/);
       if (m) {
         const [, year, month, day] = m;
         return `${pad(day)}/${pad(month)}/${year}`;
       }
 
-      // 3.2 Formato brasileiro dd/mm/yyyy
+      // 3.2 ISO puro (caso queira manter)
+      m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) {
+        const [, year, month, day] = m;
+        return `${pad(day)}/${pad(month)}/${year}`;
+      }
+
+      // 3.3 Formato brasileiro dd/mm/yyyy
       m = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       if (m) {
         const [, day, month, year] = m;
         return `${pad(day)}/${pad(month)}/${year}`;
       }
 
-      // 3.3 Fallback: tentar Date nativo (com formatação manual)
+      // 3.4 Fallback genérico (pode voltar a ter deslocamento!)
       const parsed = new Date(date);
       if (!isNaN(parsed.getTime())) {
         return `${pad(parsed.getDate())}/${pad(parsed.getMonth() + 1)}/${parsed.getFullYear()}`;
       }
     }
 
-    // 4. Se nada funcionar
+    // 4) Nada funcionou
     console.warn(`Data inválida: ${date}`);
     return "";
   } catch (error) {
