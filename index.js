@@ -110,52 +110,47 @@ function formatCPF(cpf) {
 function formatDate(date) {
   if (!date) return "";
 
+  const pad = (n) => n.toString().padStart(2, "0");
+
   try {
-    // Se a data for um número (Excel date serial)
+    // 1. Se for número (serial do Excel)
     if (typeof date === "number") {
-      // Conversão mais precisa para datas do Excel
       const excelDate = new Date((date - 25569) * 86400 * 1000);
       if (!isNaN(excelDate.getTime())) {
-        return excelDate.toLocaleDateString("pt-BR");
+        const d = excelDate;
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
       }
     }
 
-    // Se for uma string
-    if (typeof date === "string") {
-      // Tentar parsing direto primeiro
-      let parsedDate = new Date(date);
-      
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate.toLocaleDateString("pt-BR");
-      }
-      
-      // Tentar formato brasileiro dd/mm/yyyy
-      const brazilianMatch = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (brazilianMatch) {
-        const [, day, month, year] = brazilianMatch;
-        parsedDate = new Date(year, month - 1, day, 12); // meio-dia
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate.toLocaleDateString("pt-BR");
-        }
-      }
-      
-      // Tentar formato ISO yyyy-mm-dd
-      const isoMatch = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-      if (isoMatch) {
-        const [, year, month, day] = isoMatch;
-        parsedDate = new Date(year, month - 1, day, 12); // meio-dia
-        if (!isNaN(parsedDate.getTime())) {
-          return parsedDate.toLocaleDateString("pt-BR");
-        }
-      }
-    }
-
-    // Se for um objeto Date válido
+    // 2. Se já for objeto Date válido
     if (date instanceof Date && !isNaN(date.getTime())) {
-      return date.toLocaleDateString("pt-BR");
+      return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
     }
 
-    // Se nada funcionar, retornar string vazia ou valor original
+    // 3. Se for string, fazer parsing manual
+    if (typeof date === "string") {
+      // 3.1 Formato ISO yyyy-mm-dd
+      let m = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) {
+        const [, year, month, day] = m;
+        return `${pad(day)}/${pad(month)}/${year}`;
+      }
+
+      // 3.2 Formato brasileiro dd/mm/yyyy
+      m = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) {
+        const [, day, month, year] = m;
+        return `${pad(day)}/${pad(month)}/${year}`;
+      }
+
+      // 3.3 Fallback: tentar Date nativo (com formatação manual)
+      const parsed = new Date(date);
+      if (!isNaN(parsed.getTime())) {
+        return `${pad(parsed.getDate())}/${pad(parsed.getMonth() + 1)}/${parsed.getFullYear()}`;
+      }
+    }
+
+    // 4. Se nada funcionar
     console.warn(`Data inválida: ${date}`);
     return "";
   } catch (error) {
