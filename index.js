@@ -133,7 +133,7 @@ function formatDate(date) {
       const brazilianMatch = date.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       if (brazilianMatch) {
         const [, day, month, year] = brazilianMatch;
-        parsedDate = new Date(year, month - 1, day);
+        parsedDate = new Date(year, month - 1, day, 12); // meio-dia
         if (!isNaN(parsedDate.getTime())) {
           return parsedDate.toLocaleDateString("pt-BR");
         }
@@ -143,7 +143,7 @@ function formatDate(date) {
       const isoMatch = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
       if (isoMatch) {
         const [, year, month, day] = isoMatch;
-        parsedDate = new Date(year, month - 1, day);
+        parsedDate = new Date(year, month - 1, day, 12); // meio-dia
         if (!isNaN(parsedDate.getTime())) {
           return parsedDate.toLocaleDateString("pt-BR");
         }
